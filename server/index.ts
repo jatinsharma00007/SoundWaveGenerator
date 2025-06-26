@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import http from "http";
+import { AddressInfo } from "net";
 
 const app = express();
 app.use(express.json());
@@ -56,15 +58,30 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  // Try to serve the app starting from port 9000
+  // If port 9000 is not available, try the next available port
+  let currentPort = 9000;
+  const maxPort = 9100; // Try ports from 9000 to 9100
+  
+  const startServer = () => {
+    const httpServer = http.createServer(app);
+    
+    httpServer.on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE' && currentPort < maxPort) {
+        currentPort++;
+        log(`Port ${currentPort-1} is in use, trying port ${currentPort}`);
+        startServer();
+      } else {
+        log(`Error starting server: ${err.message}`);
+        process.exit(1);
+      }
+    });
+    
+    httpServer.listen(currentPort, () => {
+      const addressInfo = httpServer.address() as AddressInfo;
+      log(`Server running at http://localhost:${addressInfo.port}`);
+    });
+  };
+  
+  startServer();
 })();
