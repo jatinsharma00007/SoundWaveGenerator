@@ -1,3 +1,4 @@
+import JSZip from 'jszip';
 import { audioService } from './audio-service';
 import { retroAudioFilesData, RetroAudioFileData } from './retro-audio-data';
 
@@ -72,9 +73,9 @@ export class RetroAudioExportService {
       await this.generateAllRetroAudioFiles();
     }
 
-    // Create retro archive structure
-    const files: { name: string; data: Uint8Array }[] = [];
+    const zip = new JSZip();
     
+    // Add all retro audio files to the zip
     const fileNames = Array.from(this.generatedRetroBuffers.keys());
     for (const filename of fileNames) {
       const buffer = this.generatedRetroBuffers.get(filename);
@@ -88,21 +89,19 @@ export class RetroAudioExportService {
         ? `assets/retro/ambient/${wavName}`
         : `assets/retro/${wavName}`;
       
-      files.push({
-        name: path,
-        data: new Uint8Array(wavData)
-      });
+      zip.file(path, wavData);
     }
 
     // Add retro README.md
     const readmeContent = this.generateRetroReadmeContent();
-    files.push({
-      name: 'retro_README.md',
-      data: new TextEncoder().encode(readmeContent)
-    });
+    zip.file('retro_README.md', readmeContent);
 
-    // Return combined data as blob
-    return new Blob(files.map(f => f.data), { type: 'application/octet-stream' });
+    // Generate the zip file
+    return await zip.generateAsync({ 
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 }
+    });
   }
 
   downloadRetroFile(filename: string): void {
@@ -113,17 +112,26 @@ export class RetroAudioExportService {
     }
   }
 
-  downloadAllRetroAsZip(): void {
-    this.exportRetroAsZip().then(blob => {
+  async downloadAllRetroAsZip(): Promise<void> {
+    try {
+      console.log('Generating retro audio files...');
+      const blob = await this.exportRetroAsZip();
+      
+      console.log('Creating download for retro audio package...');
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'rock-paper-scissors-retro-audio-assets.zip';
+      a.download = 'rock-paper-scissors-retro-audio.zip';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    });
+      
+      console.log('Retro audio download started successfully');
+    } catch (error) {
+      console.error('Failed to export retro audio:', error);
+      alert('Failed to export retro audio files. Please try again.');
+    }
   }
 
   private generateRetroReadmeContent(): string {

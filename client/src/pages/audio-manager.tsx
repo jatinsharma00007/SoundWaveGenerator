@@ -58,14 +58,14 @@ export default function AudioManager() {
     audioService.setMasterVolume(0);
   };
 
-  const handleExportAll = () => {
+  const handleExportAll = async () => {
     console.log('Exporting all audio files...');
-    audioExportService.downloadAllAsZip();
+    await audioExportService.downloadAllAsZip();
   };
 
-  const handleExportRetro = () => {
+  const handleExportRetro = async () => {
     console.log('Exporting retro audio files...');
-    retroAudioExportService.downloadAllRetroAsZip();
+    await retroAudioExportService.downloadAllRetroAsZip();
   };
 
   const handleTestAll = async () => {

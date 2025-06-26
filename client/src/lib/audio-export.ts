@@ -1,3 +1,4 @@
+import JSZip from 'jszip';
 import { audioService } from './audio-service';
 import { audioFilesData } from './audio-data';
 
@@ -47,9 +48,9 @@ export class AudioExportService {
       await this.generateAllAudioFiles();
     }
 
-    // Create a simple archive structure
-    const files: { name: string; data: Uint8Array }[] = [];
+    const zip = new JSZip();
     
+    // Add all audio files to the zip
     const fileNames = Array.from(this.generatedBuffers.keys());
     for (const filename of fileNames) {
       const buffer = this.generatedBuffers.get(filename);
@@ -57,28 +58,25 @@ export class AudioExportService {
       
       const audioData = audioFilesData.find(a => a.filename === filename);
       const wavData = audioService.audioBufferToWav(buffer);
-      const mp3Name = filename.replace('.mp3', '.wav'); // Export as WAV for now
+      const wavName = filename.replace('.mp3', '.wav');
       
       const path = audioData?.category === 'ambient' 
-        ? `assets/audio/ambient/${mp3Name}`
-        : `assets/audio/${mp3Name}`;
+        ? `assets/audio/ambient/${wavName}`
+        : `assets/audio/${wavName}`;
       
-      files.push({
-        name: path,
-        data: new Uint8Array(wavData)
-      });
+      zip.file(path, wavData);
     }
 
     // Add README.md
     const readmeContent = this.generateReadmeContent();
-    files.push({
-      name: 'README.md',
-      data: new TextEncoder().encode(readmeContent)
-    });
+    zip.file('README.md', readmeContent);
 
-    // Create a simple zip-like structure (for now, just return the first file as blob)
-    // In a real implementation, you'd use a zip library like JSZip
-    return new Blob(files.map(f => f.data), { type: 'application/octet-stream' });
+    // Generate the zip file
+    return await zip.generateAsync({ 
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 }
+    });
   }
 
   downloadFile(filename: string): void {
@@ -88,17 +86,26 @@ export class AudioExportService {
     }
   }
 
-  downloadAllAsZip(): void {
-    this.exportAsZip().then(blob => {
+  async downloadAllAsZip(): Promise<void> {
+    try {
+      console.log('Generating modern audio files...');
+      const blob = await this.exportAsZip();
+      
+      console.log('Creating download for modern audio package...');
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'rock-paper-scissors-audio-assets.zip';
+      a.download = 'rock-paper-scissors-modern-audio.zip';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    });
+      
+      console.log('Modern audio download started successfully');
+    } catch (error) {
+      console.error('Failed to export modern audio:', error);
+      alert('Failed to export modern audio files. Please try again.');
+    }
   }
 
   private generateReadmeContent(): string {
