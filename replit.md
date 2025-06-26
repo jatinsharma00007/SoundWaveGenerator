@@ -99,7 +99,8 @@ This is a React-based audio management application built with TypeScript that al
 - **Session Storage**: PostgreSQL-backed sessions for user state persistence
 
 ## Changelog
-- June 26, 2025. Initial setup
+- June 26, 2025. Initial setup with modern audio generation system
+- June 26, 2025. Added complete retro audio system with 8-bit sound chip emulation
 
 ## User Preferences
 

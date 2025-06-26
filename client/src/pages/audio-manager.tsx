@@ -13,12 +13,16 @@ import {
   SlidersHorizontal,
   Book,
   Pause,
-  VolumeX
+  VolumeX,
+  Cpu
 } from 'lucide-react';
 import { AudioCard } from '@/components/audio-card';
+import { RetroAudioCard } from '@/components/retro-audio-card';
 import { audioFilesData } from '@/lib/audio-data';
+import { retroAudioFilesData } from '@/lib/retro-audio-data';
 import { audioService } from '@/lib/audio-service';
 import { audioExportService } from '@/lib/audio-export';
+import { retroAudioExportService } from '@/lib/retro-audio-export';
 
 export default function AudioManager() {
   const [masterVolume, setMasterVolume] = useState([75]);
@@ -27,6 +31,8 @@ export default function AudioManager() {
 
   const standardSounds = audioFilesData.filter(file => file.category === 'standard');
   const ambientSounds = audioFilesData.filter(file => file.category === 'ambient');
+  const retroStandardSounds = retroAudioFilesData.filter(file => file.category === 'standard');
+  const retroAmbientSounds = retroAudioFilesData.filter(file => file.category === 'ambient');
 
   const handleMasterVolumeChange = (value: number[]) => {
     setMasterVolume(value);
@@ -53,8 +59,13 @@ export default function AudioManager() {
   };
 
   const handleExportAll = () => {
-    // This would implement downloading all files as a zip
     console.log('Exporting all audio files...');
+    audioExportService.downloadAllAsZip();
+  };
+
+  const handleExportRetro = () => {
+    console.log('Exporting retro audio files...');
+    retroAudioExportService.downloadAllRetroAsZip();
   };
 
   const handleTestAll = async () => {
@@ -86,7 +97,14 @@ export default function AudioManager() {
                 className="bg-game-secondary/10 hover:bg-game-secondary/20 text-game-secondary border border-game-secondary/30"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Export All
+                Export Modern
+              </Button>
+              <Button 
+                onClick={handleExportRetro}
+                className="bg-orange-400/10 hover:bg-orange-400/20 text-orange-400 border border-orange-400/30"
+              >
+                <Cpu className="w-4 h-4 mr-2" />
+                Export Retro
               </Button>
               <Button 
                 onClick={handleTestAll}
@@ -110,18 +128,26 @@ export default function AudioManager() {
                 <FolderOpen className="text-game-secondary" />
                 <span>Project Overview</span>
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-game-bg/50 rounded-lg p-4">
-                  <div className="text-3xl font-bold text-game-success mb-2">13</div>
+                  <div className="text-3xl font-bold text-game-success mb-2">26</div>
                   <div className="text-game-neutral">Total Audio Files</div>
+                  <div className="text-xs text-game-neutral">13 Original + 13 Retro</div>
                 </div>
                 <div className="bg-game-bg/50 rounded-lg p-4">
-                  <div className="text-3xl font-bold text-game-warning mb-2">2</div>
+                  <div className="text-3xl font-bold text-game-warning mb-2">4</div>
                   <div className="text-game-neutral">Folder Categories</div>
+                  <div className="text-xs text-game-neutral">Standard + Ambient + Retro</div>
                 </div>
                 <div className="bg-game-bg/50 rounded-lg p-4">
                   <div className="text-3xl font-bold text-game-secondary mb-2">&lt; 500KB</div>
                   <div className="text-game-neutral">Max File Size</div>
+                  <div className="text-xs text-game-neutral">Optimized for Web</div>
+                </div>
+                <div className="bg-game-bg/50 rounded-lg p-4">
+                  <div className="text-3xl font-bold text-orange-400 mb-2">8-BIT</div>
+                  <div className="text-game-neutral">Retro Style</div>
+                  <div className="text-xs text-game-neutral">Arcade Sound Chips</div>
                 </div>
               </div>
             </CardContent>
@@ -158,6 +184,46 @@ export default function AudioManager() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {ambientSounds.map((audioData) => (
               <AudioCard key={audioData.filename} audioData={audioData} />
+            ))}
+          </div>
+        </section>
+
+        {/* Retro Standard Sound Effects */}
+        <section className="mb-12">
+          <div className="flex items-center space-x-3 mb-6">
+            <Cpu className="text-orange-400 text-xl" />
+            <h2 className="text-2xl font-semibold">Retro Standard Effects</h2>
+            <Badge className="bg-orange-400/20 text-orange-400 border-orange-400/30 font-mono">
+              /assets/retro/
+            </Badge>
+            <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">
+              8-BIT ARCADE
+            </Badge>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {retroStandardSounds.map((audioData) => (
+              <RetroAudioCard key={`retro_${audioData.filename}`} audioData={audioData} />
+            ))}
+          </div>
+        </section>
+
+        {/* Retro Ambient Loops */}
+        <section className="mb-12">
+          <div className="flex items-center space-x-3 mb-6">
+            <Cpu className="text-purple-400 text-xl" />
+            <h2 className="text-2xl font-semibold">Retro Ambient Loops</h2>
+            <Badge className="bg-purple-400/20 text-purple-400 border-purple-400/30 font-mono">
+              /assets/retro/ambient/
+            </Badge>
+            <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+              CHIPTUNE
+            </Badge>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {retroAmbientSounds.map((audioData) => (
+              <RetroAudioCard key={`retro_${audioData.filename}`} audioData={audioData} />
             ))}
           </div>
         </section>
@@ -254,12 +320,22 @@ export default function AudioManager() {
                     <div className="text-game-neutral"># Project Root</div>
                     <div className="ml-0 text-white">📁 assets/</div>
                     <div className="ml-4 text-white">📁 audio/</div>
-                    {standardSounds.map((sound) => (
+                    {standardSounds.slice(0, 3).map((sound) => (
                       <div key={sound.filename} className="ml-8 text-game-success">🎵 {sound.filename}</div>
                     ))}
+                    <div className="ml-8 text-game-neutral">... {standardSounds.length - 3} more files</div>
                     <div className="ml-8 text-white">📁 ambient/</div>
                     {ambientSounds.map((sound) => (
                       <div key={sound.filename} className="ml-12 text-game-warning">🔄 {sound.filename}</div>
+                    ))}
+                    <div className="ml-4 text-orange-400">📁 retro/</div>
+                    {retroStandardSounds.slice(0, 3).map((sound) => (
+                      <div key={sound.filename} className="ml-8 text-orange-400">🎮 {sound.filename}</div>
+                    ))}
+                    <div className="ml-8 text-game-neutral">... {retroStandardSounds.length - 3} more files</div>
+                    <div className="ml-8 text-orange-400">📁 ambient/</div>
+                    {retroAmbientSounds.map((sound) => (
+                      <div key={sound.filename} className="ml-12 text-purple-400">🕹️ {sound.filename}</div>
                     ))}
                   </div>
                 </div>
@@ -270,22 +346,26 @@ export default function AudioManager() {
                   <div className="bg-game-bg rounded-lg p-4">
                     <div className="text-sm text-game-neutral space-y-3">
                       <div>
-                        <div className="font-semibold text-white mb-1">JavaScript Example:</div>
+                        <div className="font-semibold text-white mb-1">Modern Audio:</div>
                         <code className="text-game-success text-xs block">
                           const audio = new Audio('./assets/audio/click.mp3');<br />
                           audio.play();
                         </code>
                       </div>
                       <div>
-                        <div className="font-semibold text-white mb-1">Volume Control:</div>
-                        <code className="text-game-success text-xs block">
-                          audio.volume = 0.7; // 70% volume
+                        <div className="font-semibold text-orange-400 mb-1">Retro Audio:</div>
+                        <code className="text-orange-400 text-xs block">
+                          const retro = new Audio('./assets/retro/click.wav');<br />
+                          retro.play();
                         </code>
                       </div>
                       <div>
-                        <div className="font-semibold text-white mb-1">Loop Ambient:</div>
-                        <code className="text-game-success text-xs block">
-                          ambientAudio.loop = true;
+                        <div className="font-semibold text-white mb-1">Audio Manager:</div>
+                        <code className="text-purple-400 text-xs block">
+                          class AudioManager &#123;<br />
+                          &nbsp;&nbsp;constructor() &#123; this.retroMode = false; &#125;<br />
+                          &nbsp;&nbsp;toggleRetro() &#123; this.retroMode = !this.retroMode; &#125;<br />
+                          &#125;
                         </code>
                       </div>
                     </div>
@@ -303,7 +383,8 @@ export default function AudioManager() {
           <div className="flex items-center justify-between text-sm text-game-neutral">
             <div>
               <p>Rock Paper Scissors Battle - Audio Asset Manager</p>
-              <p>Total project size: <span className="text-game-success">~4.8 MB</span> | Files ready for production</p>
+              <p>Total project size: <span className="text-game-success">~9.6 MB</span> | 26 files ready for production</p>
+              <p>Includes: <span className="text-game-secondary">Modern MP3</span> + <span className="text-orange-400">Retro 8-bit WAV</span> versions</p>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" size="sm" className="hover:text-white transition-colors">
